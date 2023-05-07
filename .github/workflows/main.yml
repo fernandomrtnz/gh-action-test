@@ -1,0 +1,24 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Bump version and create a release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.CREATE_RELEASE_TOKEN }}
+      with:
+        tag_name: v1.0.0-beta
+        release_name: Release v1.0.0-beta
+        draft: false
+        prerelease: false

@@ -1,0 +1,49 @@
+name: gh-action-test-tostones
+description: "Check for breaking changes in API specifications"
+
+inputs:
+  file_path:
+    description: "Path to the API specification that you want to compare"
+    required: true
+  access_token:
+    description: "API Evolution Management Service access token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v2
+      with:
+        ref: main
+        path: main
+
+    - name: Checkout current branch
+      uses: actions/checkout@v2
+      with:
+        path: current
+
+    - name: Debug
+      run: |
+        cat "${GITHUB_WORKSPACE}/main/${{ inputs.file_path }}"
+        cat "${GITHUB_WORKSPACE}/current/${{ inputs.file_path }}"
+
+    - name: Check for breaking changes
+      run: |
+        before_file_path="${GITHUB_WORKSPACE}/main/${{ inputs.file_path }}"
+        after_file_path="${GITHUB_WORKSPACE}/current/${{ inputs.file_path }}"
+        api_url="https://qlq2x2wbi74vc4h6hvjgc5szky0phost.lambda-url.us-east-2.on.aws/"
+
+        if [ -f "${before_file_path}" ] && [ -f "${after_file_path}" ]; then
+          response=$(curl -X POST \
+            "${api_url}" \
+            -H "Content-Type: multipart/form-data" \
+            -H "Authorization: Bearer ${{ inputs.access_token }}" \
+            -F "before=@${before_file_path}" \
+            -F "after=@${after_file_path}")
+
+          echo "Upload response: ${response}"
+        else
+          echo "File not found in either main or current branch."
+        fi
+      shell: bash
